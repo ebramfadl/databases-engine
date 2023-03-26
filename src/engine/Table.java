@@ -31,8 +31,13 @@ public class Table implements Serializable {
         this.numberOfPAges = numberOfPAges;
     }
 
+    public int getN() {
+        return n;
+    }
+
     @Override
     public String toString() {
         return "Table name :"+tableName+", Number Of pages :"+numberOfPAges+" , N : "+n;
     }
+
 }

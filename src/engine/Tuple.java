@@ -22,7 +22,7 @@ public class Tuple implements Serializable {
        String str = "";
 
         for (Map.Entry<String,Object> entry : this.htblColNameValue.entrySet()){
-            str = str + entry.getKey()+" : "+entry.getValue();
+            str = str + entry.getKey()+" : "+entry.getValue()+" ";
         }
 
         return  str;

@@ -1,9 +1,10 @@
 package engine;
 
+import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.Vector;
 
-public class Page {
+public class Page implements Serializable {
 
     private String tableName;
     private int pageNumber;
@@ -23,6 +24,11 @@ public class Page {
 
         Tuple tuple = new Tuple(htblColNameValue);
         pageTuples.add(tuple);
+    }
+
+
+    public Vector<Tuple> getPageTuples() {
+        return pageTuples;
     }
 
     @Override

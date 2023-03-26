@@ -2,9 +2,7 @@ package engine;
 
 import java.io.BufferedReader;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.*;
 
 public class DBApp {
 
@@ -12,6 +10,47 @@ public class DBApp {
     public  void init(){
 
     }
+
+    public static String getPrimaryKey(String tableName) throws IOException {
+
+        String line = "";
+        String path = "metadata.csv";
+
+       BufferedReader br = new BufferedReader(new FileReader(path));
+       while ( (line = br.readLine()) != null ){
+           String[] fields = line.split(",");
+           if(fields[0].equals(tableName) && fields[3].equals("true"))
+               return fields[1];
+       }
+       br.close();
+       return null;
+    }
+
+    public static void sortPage(Page page, String toSortBy){
+
+        Comparator<Tuple> compareBy = new Comparator<Tuple>() {
+            @Override
+            public int compare(Tuple o1, Tuple o2) {
+                int key1 = (int)o1.getHtblColNameValue().get(toSortBy);
+                int key2 = (int)o2.getHtblColNameValue().get(toSortBy);
+                return key1 - key2;
+            }
+        };
+        Collections.sort(page.getPageTuples(),compareBy);
+    }
+
+    public static String displayTablePages(String tableName) throws ClassNotFoundException {
+
+        String str = "";
+        Table table = deserializeTable(tableName);
+
+        for(int i = 1 ; i<= table.getNumberOfPAges() ; i++){
+            Page page = deserializePage(tableName+i+".bin");
+            str = str + page.toString()+"\n";
+        }
+        return  str;
+    }
+
 
     public static boolean validateDataTypes(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
         String line = "";
@@ -51,6 +90,39 @@ public class DBApp {
 
         }
 
+
+    public static boolean serializePage(String path, Page page){
+
+        try {
+            FileOutputStream fileOut = new FileOutputStream(path);
+            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+            objectOut.writeObject(page);
+            System.out.println("page updated " + path + " successfully!");
+            objectOut.close();
+            fileOut.close();
+            return true;
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static Page deserializePage(String path) throws ClassNotFoundException{
+        try {
+            FileInputStream fileInputStream = new FileInputStream(path);
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            Page page = (Page) objectInputStream.readObject();
+
+            objectInputStream.close();
+            fileInputStream.close();
+            return page;
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public static boolean serializeTable(Table table)  {
         try(
@@ -151,26 +223,79 @@ public class DBApp {
 
     // following method inserts one row only.
     // htblColNameValue must include a value for the primary key
-    public static void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException, IOException {
+    public static void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException, IOException, ClassNotFoundException {
 
         if(checkTableExists(strTableName) == false)
             throw new DBAppException("Table "+strTableName+" does not exist, Please create it first");
 
         validateDataTypes(strTableName,htblColNameValue);
 
+        Table table = deserializeTable(strTableName);
+
+        String pk = getPrimaryKey(strTableName);
+
+        if(table.getNumberOfPAges() == 0){
+            Page page = new Page(strTableName,1,table.getN());
+            page.addTuple(htblColNameValue);
+            String path = strTableName+"1"+".bin";
+            table.setNumberOfPAges(1);
+            serializeTable(table);
+            serializePage(path,page);
+            return;
+        }
+
+
+        for(int i = 1 ; i<= table.getNumberOfPAges() ; i++){
+            Page currentPage = deserializePage(table.getTableName()+i+".bin");
+            Vector<Tuple> pageVector = currentPage.getPageTuples();
+
+            if( pageVector.size() < pageVector.capacity()){
+                currentPage.addTuple(htblColNameValue);
+                sortPage(currentPage,pk);
+                serializePage(table.getTableName()+i+".bin",currentPage);
+                return;
+            }
+
+
+        }
+        //1-first tuple inserted
+        // create new page then add the tuple
+
+
+        //2-page contains available locations
+        //-insert
+        //-sort
+
+        //3-page is full
+        // 1 - check if value less than max of page and page is full
+            //pop the maximum of the page
+            //insert value
+            //sort page
+            //call method on the popped element
+
 
     }
 
-    public static void main(String[] args) throws DBAppException, IOException {
+    public static void main(String[] args) throws DBAppException, IOException, ClassNotFoundException {
 //        Table table = new Table("Student",5);
 //        serializeTable(table);
 //        System.out.println(deserializeTable("Student").toString());
 
-//        Hashtable htblColNameValue = new Hashtable( );
-//        htblColNameValue.put("id", new Integer( 2343432 ));
-//        htblColNameValue.put("name", new String("Ahmed Noor" ) );
-//        htblColNameValue.put("gpa", new Double( 1 ) );
-//        insertIntoTable( "Student" , htblColNameValue );
+        Hashtable htblColNameValue = new Hashtable( );
+        htblColNameValue.put("id", new Integer( 10 ));
+        htblColNameValue.put("name", new String("Maya" ) );
+        htblColNameValue.put("gpa", new Double( 0.7 ) );
+        insertIntoTable( "Student" , htblColNameValue );
+
+//        Page page = deserializePage("Student1.bin");
+//        System.out.println(page);
+
+//        Table table = deserializeTable("Student");
+//        table.setNumberOfPAges(0);
+//        serializeTable(table);
+
+       System.out.println(displayTablePages("Student"));
+
 
     }
 
