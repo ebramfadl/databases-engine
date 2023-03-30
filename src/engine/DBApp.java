@@ -92,7 +92,8 @@ public class DBApp {
 
 
     public static boolean serializePage(String path, Page page){
-
+            //write ===> FileOutputStream
+            //Read ===> FileInputStream
         try {
             FileOutputStream fileOut = new FileOutputStream(path);
             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
@@ -215,7 +216,7 @@ public class DBApp {
             System.out.println("Data inserted successfully into metadata.csv");
         }
 
-        Table table = new Table(strTableName,5);
+        Table table = new Table(strTableName,DBConfig.getPageMaximum());
         serializeTable(table);
 
     }
@@ -224,7 +225,7 @@ public class DBApp {
     // following method inserts one row only.
     // htblColNameValue must include a value for the primary key
     public static void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException, IOException, ClassNotFoundException {
-
+        //check id does not exist
         if(checkTableExists(strTableName) == false)
             throw new DBAppException("Table "+strTableName+" does not exist, Please create it first");
 
@@ -232,10 +233,10 @@ public class DBApp {
 
         Table table = deserializeTable(strTableName);
 
-        String pk = getPrimaryKey(strTableName);
+        String pk = getPrimaryKey(strTableName); //"id"
 
         if(table.getNumberOfPAges() == 0){
-            Page page = new Page(strTableName,1,table.getN());
+            Page page = new Page(strTableName,1,DBConfig.getPageMaximum());
             page.addTuple(htblColNameValue);
             String path = strTableName+"1"+".bin";
             table.setNumberOfPAges(1);
@@ -256,22 +257,27 @@ public class DBApp {
                 return;
             }
 
+            else if( (int)(htblColNameValue.get(pk)) < (int)(pageVector.lastElement().getHtblColNameValue().get(pk)) && pageVector.size() == pageVector.capacity()){
+                Tuple poppedTuple = pageVector.remove(pageVector.size()-1);
+                currentPage.addTuple(htblColNameValue);
+                sortPage(currentPage,pk);
+                serializePage(table.getTableName()+i+".bin",currentPage);
+                insertIntoTable(strTableName,poppedTuple.getHtblColNameValue());
+                return;
+            }
+            else if(   !((int)(htblColNameValue.get(pk)) < (int)(pageVector.lastElement().getHtblColNameValue().get(pk)) || pageVector.size() < pageVector.capacity())  && table.getNumberOfPAges() == i ){
+                int pageNumber = table.getNumberOfPAges()+1;
+                Page newPage = new Page(strTableName,pageNumber,DBConfig.getPageMaximum());
+                newPage.addTuple(htblColNameValue);
+                table.setNumberOfPAges(table.getNumberOfPAges()+1);
+                serializeTable(table);
+                serializePage(table.getTableName()+pageNumber+".bin",newPage);
+                return;
+            }
+
 
         }
-        //1-first tuple inserted
-        // create new page then add the tuple
 
-
-        //2-page contains available locations
-        //-insert
-        //-sort
-
-        //3-page is full
-        // 1 - check if value less than max of page and page is full
-            //pop the maximum of the page
-            //insert value
-            //sort page
-            //call method on the popped element
 
 
     }
@@ -281,11 +287,11 @@ public class DBApp {
 //        serializeTable(table);
 //        System.out.println(deserializeTable("Student").toString());
 
-        Hashtable htblColNameValue = new Hashtable( );
-        htblColNameValue.put("id", new Integer( 10 ));
-        htblColNameValue.put("name", new String("Maya" ) );
-        htblColNameValue.put("gpa", new Double( 0.7 ) );
-        insertIntoTable( "Student" , htblColNameValue );
+//        Hashtable htblColNameValue = new Hashtable( );
+//        htblColNameValue.put("id", new Integer( 18 ));
+//        htblColNameValue.put("name", new String("Ashry" ) );
+//        htblColNameValue.put("gpa", new Double( 0.7 ) );
+//        insertIntoTable( "Student" , htblColNameValue );
 
 //        Page page = deserializePage("Student1.bin");
 //        System.out.println(page);
