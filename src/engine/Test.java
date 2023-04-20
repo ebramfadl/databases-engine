@@ -27,7 +27,8 @@ public class Test {
 //
 //        dbApp.createTable( strTableName,"id", htblColNameType,htblColNameMin,htblColNameMax );
 
-
+        Integer x = (int)(5);
+        System.out.println(x.getClass().getName().equals("java.Lang.Integer"));
 
     }
 

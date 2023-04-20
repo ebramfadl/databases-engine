@@ -36,6 +36,8 @@ public class DBApp {
                 return key1 - key2;
             }
         };
+
+
         Collections.sort(page.getPageTuples(),compareBy);
     }
 
@@ -207,6 +209,7 @@ public class DBApp {
             String isClustering = "false";
             if(entry.getKey().equals(strClusteringKeyColumn))
                 isClustering="true";
+
             String[] columns= {strTableName,entry.getKey(),entry.getValue(),isClustering,null,null,htblColNameMin.get(entry.getKey()),htblColNameMax.get(entry.getKey())};
 
             BufferedWriter br = new BufferedWriter( new FileWriter(path,true));

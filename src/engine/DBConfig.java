@@ -32,8 +32,14 @@ public class DBConfig {
 
     public static void setPageMaximum(int pageMaximum) {
         DBConfig.pageMaximum = pageMaximum;
-        update();
-    }
+        Properties properties = new Properties();
+        properties.setProperty("MaximumRowsCountinTablePage",Integer.toString((pageMaximum)));
+        try (FileOutputStream out = new FileOutputStream(fileName)){
+            properties.store(out,"Configured successfully!");
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }    }
 
     public static int getOctreeNodeEntries() {
         Properties properties = new Properties();
@@ -49,20 +55,16 @@ public class DBConfig {
 
     public static void setOctreeNodeEntries(int octreeNodeEntries) {
         DBConfig.octreeNodeEntries = octreeNodeEntries;
-        update();
-    }
-
-    public static void update(){
         Properties properties = new Properties();
-        properties.setProperty("MaximumRowsCountinTablePage",Integer.toString((pageMaximum)));
         properties.setProperty("MaximumEntriesinOctreeNode",Integer.toString(octreeNodeEntries));
         try (FileOutputStream out = new FileOutputStream(fileName)){
             properties.store(out,"Configured successfully!");
         }
         catch (Exception e){
             e.printStackTrace();
-        }
-    }
+        }    }
+
+
 
     public static void main(String[] args) {
 //        DBConfig.setPageMaximum(5);
