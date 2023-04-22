@@ -5,13 +5,13 @@ import java.io.Serializable;
 public class Table implements Serializable {
 
     private  String tableName;
-    private int numberOfPAges;
+    private int numberOfPages;
     private int n;
 
 
     public Table(String tableName,int n) {
         this.tableName = tableName;
-        this.numberOfPAges = 0;
+        this.numberOfPages = 0;
         this.n=n;
     }
 
@@ -23,12 +23,12 @@ public class Table implements Serializable {
         this.tableName = tableName;
     }
 
-    public int getNumberOfPAges() {
-        return numberOfPAges;
+    public int getNumberOfPages() {
+        return numberOfPages;
     }
 
-    public void setNumberOfPAges(int numberOfPAges) {
-        this.numberOfPAges = numberOfPAges;
+    public void setNumberOfPages(int numberOfPAges) {
+        this.numberOfPages = numberOfPAges;
     }
 
     public int getN() {
@@ -37,7 +37,7 @@ public class Table implements Serializable {
 
     @Override
     public String toString() {
-        return "Table name :"+tableName+", Number Of pages :"+numberOfPAges+" , N : "+n;
+        return "Table name :"+tableName+", Number Of pages :"+numberOfPages+" , N : "+n;
     }
 
 }

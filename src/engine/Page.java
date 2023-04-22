@@ -12,7 +12,7 @@ public class Page implements Serializable {
 
     private Vector<Tuple> pageTuples;
 
-    public Page(String tableName, int pageNumber, int n) {
+    public Page(int pageNumber, int n, String tableName) {
         this.tableName = tableName;
         this.pageNumber = pageNumber;
         this.n = n;
@@ -29,6 +29,14 @@ public class Page implements Serializable {
 
     public Vector<Tuple> getPageTuples() {
         return pageTuples;
+    }
+
+    public int getPageNumber() {
+        return pageNumber;
+    }
+
+    public void setPageNumber(int pageNumber) {
+        this.pageNumber = pageNumber;
     }
 
     @Override
