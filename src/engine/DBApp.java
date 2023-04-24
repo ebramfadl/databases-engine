@@ -328,11 +328,82 @@ public class DBApp {
 
         }
 
+    }
+    public void updateTable(String strTableName, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue) throws DBAppException, IOException, ClassNotFoundException {
+        if(!checkTableExists(strTableName)){
+            throw new DBAppException("Table " +strTableName+ " does not exist.");
+        }
+        int pageNumber = getPageByBinarySearch(strTableName, strClusteringKeyValue);
+        Page page = deserializePage(strTableName + pageNumber + ".bin");
+        int tupleIndex = getTupleByBinarySearch(strTableName, strClusteringKeyValue);
+        Tuple tuple = page.getPageTuples().get(tupleIndex);
 
 
+        for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
+            if(!tuple.getHtblColNameValue().containsKey(entry.getKey())){
+                throw new DBAppException("Field " +entry.getKey()+  " does not exist.");
+            }
+
+            else if(!tuple.getHtblColNameValue().get(entry.getKey()).getClass().getName().equals(entry.getValue().getClass().getName())){
+                throw new DBAppException("Cannot update column " +entry.getKey()+ " to be " + entry.getValue());
+            }
+            else {
+                tuple.getHtblColNameValue().put(entry.getKey(),entry.getValue());
+            }
+        }
+        serializePage(strTableName + pageNumber + ".bin",page);
+    }
+    public static int getTupleByBinarySearch(String strTableName, String value) throws ClassNotFoundException, IOException, DBAppException {
+        int x = getPageByBinarySearch(strTableName,value);
+        Page page = deserializePage(strTableName + x + ".bin");
+        String pk = getPrimaryKey(strTableName);    //"ID"
+        int low = 0;
+        int high = page.getPageTuples().size() - 1;
+        while(low <= high){
+            int mid = (low + high)/2;
+            String key = page.getPageTuples().get(mid).getHtblColNameValue().get(pk).toString();
+            if(compareTo(key,value) == 0){
+                return mid;
+            }
+            else if(compareTo(key,value) == -1){
+                low = mid + 1;
+            }
+            else{
+                high = mid - 1;
+            }
+
+        }
+        throw new DBAppException("Record with primary key " + value + " is not found");
+    }
+    public static int getPageByBinarySearch(String strTableName, String value) throws IOException, ClassNotFoundException, DBAppException {
+        Table table = deserializeTable(strTableName);
+        int low = 1;
+        int high = table.getNumberOfPages();
+        String pk = getPrimaryKey(strTableName);
+        while(low <= high){
+            int mid = (low + high)/2;
+            Page page = deserializePage(strTableName + mid + ".bin");
+            String min = page.getPageTuples().firstElement().getHtblColNameValue().get(pk).toString();
+            String max = page.getPageTuples().lastElement().getHtblColNameValue().get(pk).toString();
+
+            if((compareTo(value, min) >= 0) && (compareTo(value,max) <= 0)){
+                return mid;
+            }
+            else if(compareTo(value,max) == 1){
+                low = mid + 1;
+            }
+            else{
+                high = mid - 1;
+            }
+
+        }
+        throw new DBAppException("Record with primary key " + value + " is not found");
     }
 
+
+
     public static void main(String[] args) throws DBAppException, IOException, ClassNotFoundException {
+        DBApp dbApp = new DBApp();
 //        Table table = new Table("Student",5);
 //        serializeTable(table);
 //        System.out.println(deserializeTable("Student").toString());
@@ -351,8 +422,15 @@ public class DBApp {
 
        System.out.println(displayTablePages("Student"));
 
+//       int x = getTupleByBinarySearch("Student","55");
+//       System.out.println(x);
 
 
+//        Hashtable table = new Hashtable();
+//        table.put("name","Ebram");
+//        table.put("gpa", 0.3);
+//        dbApp.updateTable("Arwa","45", table);
+//        System.out.println(displayTablePages("Student"));
 
 
 //		Hashtable htblColNameValue = new Hashtable( );
