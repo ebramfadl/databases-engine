@@ -67,7 +67,7 @@ public class DBApp {
 
     }
 
-    public static String displayTablePages(String tableName) throws ClassNotFoundException {
+    public static String displayTablePages(String tableName) throws ClassNotFoundException, IOException {
 
         String str = "";
         Table table = deserializeTable(tableName);
@@ -137,8 +137,7 @@ public class DBApp {
         return false;
     }
 
-    public static Page deserializePage(String path) throws ClassNotFoundException{
-        try {
+    public static Page deserializePage(String path) throws ClassNotFoundException, IOException{
             FileInputStream fileInputStream = new FileInputStream(path);
             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
             Page page = (Page) objectInputStream.readObject();
@@ -146,11 +145,7 @@ public class DBApp {
             objectInputStream.close();
             fileInputStream.close();
             return page;
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-        return null;
+
     }
 
     public static boolean serializeTable(Table table)  {
@@ -400,6 +395,64 @@ public class DBApp {
         throw new DBAppException("Record with primary key " + value + " is not found");
     }
 
+    public void deleteFromTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException, ClassNotFoundException, IOException {
+        if(!checkTableExists(strTableName)){
+            throw new DBAppException("Table " +strTableName+ " does not exist.");
+        }
+        Table table = deserializeTable(strTableName);
+        for (int i = 1; i <= table.getNumberOfPages(); i++) {
+            Page page = deserializePage(strTableName +i+ ".bin");
+            Vector<Tuple> pageVector = page.getPageTuples();
+            Iterator<Tuple> tupleItearator = pageVector.iterator();
+            while (tupleItearator.hasNext()) {
+                Tuple tuple = tupleItearator.next();
+                Boolean flag=true;
+                for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
+                    if(!tuple.getHtblColNameValue().containsKey(entry.getKey())){
+                        throw new DBAppException("Field " +entry.getKey()+  " does not exist.");
+                    }
+                    else if(!tuple.getHtblColNameValue().get(entry.getKey()).getClass().getName().equals(entry.getValue().getClass().getName())){
+                        throw new DBAppException("Invalid data type.");
+                    }
+                    else if(!tuple.getHtblColNameValue().get(entry.getKey()).equals(entry.getValue())){
+                        flag = false;
+                    }
+
+                }
+                if(flag==true){
+                    tupleItearator.remove();
+                }
+            }
+            serializePage(strTableName +i+ ".bin",page);
+            if(page.getPageTuples().isEmpty()){
+                File file = new File(strTableName +i+".bin");
+                file.delete();
+                updatePagesNumber(strTableName,i+1);
+                table.setNumberOfPages(table.getNumberOfPages()-1);
+                serializeTable(table);
+            }
+        }
+        serializeTable(table);
+
+    }
+
+    public void updatePagesNumber(String tablename, int currentpage) throws ClassNotFoundException, IOException {
+        Page page;
+        try{
+            page = deserializePage(tablename + currentpage + ".bin");
+        }
+        catch(IOException e){
+            return;
+        }
+        int newPageNumber = currentpage - 1;
+        File oldFile = new File(tablename + currentpage + ".bin");
+        File newFile = new File(tablename + newPageNumber + ".bin");
+        oldFile.renameTo(newFile);
+        page.setPageNumber(newPageNumber);
+        serializePage(tablename + newPageNumber + ".bin",page);
+        updatePagesNumber(tablename,currentpage+1);
+    }
+
 
 
     public static void main(String[] args) throws DBAppException, IOException, ClassNotFoundException {
@@ -420,7 +473,50 @@ public class DBApp {
 //        table.setNumberOfPages(0);
 //        serializeTable(table);
 
-       System.out.println(displayTablePages("Student"));
+//       System.out.println(displayTablePages("Student"));
+//
+//       Hashtable htblColNameValue = new Hashtable( );
+//        htblColNameValue.put("id", new Integer( 60 ));
+//        htblColNameValue.put("name", new String("Toni Kroos" ) );
+//        htblColNameValue.put("gpa", new Double( 2.1 ) );
+//        insertIntoTable( "Student" , htblColNameValue );
+//
+//        htblColNameValue = new Hashtable( );
+//        htblColNameValue.put("id", new Integer( 65 ));
+//        htblColNameValue.put("name", new String("Nacho Fernandez" ) );
+//        htblColNameValue.put("gpa", new Double( 2.1 ) );
+//        insertIntoTable( "Student" , htblColNameValue );
+////
+//        htblColNameValue = new Hashtable( );
+//        htblColNameValue.put("id", new Integer( 70 ));
+//        htblColNameValue.put("name", new String("Busquets" ) );
+//        htblColNameValue.put("gpa", new Double( 1.5 ) );
+//        insertIntoTable( "Student" , htblColNameValue );
+//
+//        htblColNameValue = new Hashtable( );
+//        htblColNameValue.put("id", new Integer( 75 ));
+//        htblColNameValue.put("name", new String("Sergio Ramos" ) );
+//        htblColNameValue.put("gpa", new Double( 3.2 ) );
+//        insertIntoTable( "Student" , htblColNameValue );
+
+        Hashtable htblColNameValue = new Hashtable();
+        htblColNameValue.put("gpa", "Ebram");
+
+        dbApp.deleteFromTable( "Arwa" , htblColNameValue );
+
+
+        String displayTables = displayTablePages("Student");
+        System.out.println(displayTables);
+
+//        Table table = deserializeTable("Student");
+//        table.setNumberOfPages(1);
+//        serializeTable(table);
+
+
+
+
+
+
 
 //       int x = getTupleByBinarySearch("Student","55");
 //       System.out.println(x);
@@ -432,13 +528,13 @@ public class DBApp {
 //        dbApp.updateTable("Arwa","45", table);
 //        System.out.println(displayTablePages("Student"));
 
-
+//
 //		Hashtable htblColNameValue = new Hashtable( );
 //		htblColNameValue.put("id", new Integer( 21 ));
 //		htblColNameValue.put("name", new String("Arwa" ) );
 //		htblColNameValue.put("gpa", new Double( 0.7 ) );
 //		insertIntoTable( "Student" , htblColNameValue );
-//
+
 //		htblColNameValue = new Hashtable( );
 //		htblColNameValue.put("id", new Integer( 25 ));
 //		htblColNameValue.put("name", new String("Maya" ) );
@@ -456,6 +552,8 @@ public class DBApp {
 //		htblColNameValue.put("name", new String("Nour" ) );
 //		htblColNameValue.put("gpa", new Double( 0.7 ) );
 //		insertIntoTable( "Student" , htblColNameValue );
+
+
 //
 //		htblColNameValue = new Hashtable( );
 //		htblColNameValue.put("id", new Integer( 40 ));
