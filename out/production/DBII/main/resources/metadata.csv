@@ -1,0 +1,7 @@
+Teaching,gpa,java.lang.Double,false,null,null,1.0,8.0
+Teaching,major,java.lang.String,false,null,null,A,ZZZZZZ
+Teaching,age,java.lang.Integer,false,null,null,1,50
+Teaching,name,java.lang.String,true,null,null,A,ZZZZZZ
+Person,name,java.lang.String,false,null,null,A,ZZZZZZ
+Person,gender,java.lang.String,false,null,null,A,Z
+Person,id,java.lang.Integer,true,null,null,1,100000

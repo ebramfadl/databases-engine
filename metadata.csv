@@ -1,7 +1,0 @@
-Student,gpa,java.lang.Double,false,null,null,0.7,5
-Student,name,java.lang.String,false,null,null,A,ZZZZZZZZZZZ
-Student,id,java.lang.Integer,true,null,null,0,1000
-Teaching,gpa,java.lang.Double,false,null,null,1.0,8.0
-Teaching,major,java.lang.String,false,null,null,A,ZZZZZZ
-Teaching,age,java.lang.Integer,false,null,null,1,50
-Teaching,name,java.lang.String,true,null,null,A,ZZZZZZ
